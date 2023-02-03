@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = {"http://localhost:4200"})
 @RestController
 @RequestMapping("/api/v1")
 public class CategoryRestController {
@@ -36,11 +37,24 @@ public class CategoryRestController {
 
     }
 
+
     @PutMapping("/categories/{id}")
     public  ResponseEntity<CategoryResponseRest> update(@PathVariable Long id, @RequestBody Category category){
 
         ResponseEntity<CategoryResponseRest> response=iCategoryService.update(id,category);
         return response;
+    }
+
+    /**
+     *delete Category
+     * @param id
+     * @return
+     */
+    @DeleteMapping("/categories/{id}")
+    public ResponseEntity<CategoryResponseRest> delete(@PathVariable Long id){
+
+        ResponseEntity<CategoryResponseRest> response=iCategoryService.deleteById(id);
+        return  response;
     }
 
 }
