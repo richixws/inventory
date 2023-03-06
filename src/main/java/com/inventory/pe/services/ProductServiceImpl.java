@@ -49,6 +49,7 @@ public class ProductServiceImpl implements IProductService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResponseEntity<ProductResponseRest> searchById(Long id) {
 
         ProductResponseRest response =new ProductResponseRest();
@@ -74,6 +75,44 @@ public class ProductServiceImpl implements IProductService{
             return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+
+        return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseEntity<ProductResponseRest> searchByName(String name) {
+
+        ProductResponseRest response =new ProductResponseRest();
+        List<Product> list=new ArrayList<>();
+        List<Product> listAux=new ArrayList<>();
+
+        try {
+
+            //search producto by name
+            listAux = productRepository.findByNameContainingIgnoreCase(name);
+
+            if(listAux.size() > 0){
+
+                listAux.stream().forEach( (p)-> {
+                    byte[] imageDescompressed = Util.decompressZlib(p.getPicture());
+                    p.setPicture(imageDescompressed);
+                    list.add(p);
+                });
+
+
+                response.getProductResponse().setProduct(listAux);
+                response.setMetadata("Respuesta Ok", "00","PRODUCTOS ENCONTRADOS" );
+            }else{
+                response.setMetadata("Respuesta nook","-1","Productos no encontrados");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.NOT_FOUND);
+
+            }
+        }catch (Exception e){
+            response.setMetadata("Respuesta nook","-1","Error al consultar por Id");
+            e.getStackTrace();
+            return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
     }
