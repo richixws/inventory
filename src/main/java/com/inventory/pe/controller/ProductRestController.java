@@ -20,7 +20,6 @@ public class ProductRestController {
     private IProductService productService;
 
     /**
-     *
      * @param picture
      * @param name
      * @param price
@@ -44,6 +43,14 @@ public class ProductRestController {
 
         ResponseEntity<ProductResponseRest> response=productService.save(product,categoryId);
         return response;
+
+    }
+
+    @GetMapping("/products/{id}")
+    public ResponseEntity<ProductResponseRest> findById(@PathVariable Long id){
+
+        ResponseEntity<ProductResponseRest> response=productService.searchById(id);
+        return  response;
 
     }
 

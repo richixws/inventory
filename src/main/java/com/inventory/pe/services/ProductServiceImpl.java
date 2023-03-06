@@ -6,6 +6,7 @@ import com.inventory.pe.model.Category;
 import com.inventory.pe.model.Product;
 import com.inventory.pe.response.CategoryResponseRest;
 import com.inventory.pe.response.ProductResponseRest;
+import com.inventory.pe.util.Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,10 @@ public class ProductServiceImpl implements IProductService{
     @Autowired
     private CategoryRepository categoryRepository;
 
+    /**
+     *
+     * @return
+     */
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<ProductResponseRest> search() {
@@ -45,10 +50,36 @@ public class ProductServiceImpl implements IProductService{
 
     @Override
     public ResponseEntity<ProductResponseRest> searchById(Long id) {
-        return null;
+
+        ProductResponseRest response =new ProductResponseRest();
+        List<Product> list=new ArrayList<>();
+
+        try {
+            Optional<Product> product=productRepository.findById(id);
+            if(product.isPresent()){
+
+                byte[] imageDescompressed = Util.decompressZlib(product.get().getPicture());
+                product.get().setPicture(imageDescompressed);
+                list.add(product.get());
+                response.getProductResponse().setProduct(list);
+                response.setMetadata("Respuesta Ok", "00","PRODUCTO ENCONTRADO" );
+            }else{
+                response.setMetadata("Respuesta nook","-1","Producto no encontrada");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.NOT_FOUND);
+
+            }
+        }catch (Exception e){
+            response.setMetadata("Respuesta nook","-1","Error al consultar por Id");
+            e.getStackTrace();
+            return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+
+        return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
     }
 
     @Override
+    @Transactional
     public ResponseEntity<ProductResponseRest> save(Product product, Long id) {
 
         ProductResponseRest response=new ProductResponseRest();
