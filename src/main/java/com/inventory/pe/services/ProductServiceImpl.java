@@ -35,13 +35,28 @@ public class ProductServiceImpl implements IProductService{
     public ResponseEntity<ProductResponseRest> search() {
 
         ProductResponseRest response=new ProductResponseRest();
+        List<Product> list= new ArrayList<>();
+        List<Product> listAux=new ArrayList<>();
+
         try {
-            List<Product> products=productRepository.findAll();
-            response.getProductResponse().setProduct(products);
-            response.setMetadata("Respuesta ok","00",  "Respuesta Exitosa");
+            listAux =productRepository.findAll();
+            if (listAux.size() > 0){
+                listAux.stream().forEach((p) -> {
+                   byte[] imageDescompressed = Util.decompressZlib(p.getPicture());
+                   p.setPicture(imageDescompressed);
+                   list.add(p);
+
+                });
+                response.getProductResponse().setProduct(list);
+                response.setMetadata("Respuesta ok","00",  "Productos encontrados");
+            }else{
+                response.setMetadata("Respuesta nok","-1",  "Productos no encontrados");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.NOT_FOUND);
+            }
+
         }catch (Exception e){
-            response.setMetadata("Respuesta nook","-1","Respuesta Incorrecta");
             e.getStackTrace();
+            response.setMetadata("Respuesta nook","-1","");
             return new ResponseEntity<ProductResponseRest>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -152,13 +167,27 @@ public class ProductServiceImpl implements IProductService{
     }
 
     @Override
+    public ResponseEntity<ProductResponseRest> deleteById(Long id) {
+
+        ProductResponseRest response =new ProductResponseRest();
+
+        try {
+            productRepository.deleteById(id);
+            response.setMetadata("Respuesta Ok", "00","´producto eliminado" );
+
+        }catch (Exception e){
+            response.setMetadata("Respuesta nook","-1","Error al eliminar por Id");
+            e.getStackTrace();
+            return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
+    }
+
+    @Override
     public ResponseEntity<ProductResponseRest> update(Long id, Product product) {
         return null;
     }
 
-    @Override
-    public ResponseEntity<ProductResponseRest> deleteById(Long id) {
-        return null;
-    }
 
 }
