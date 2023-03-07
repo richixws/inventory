@@ -167,6 +167,7 @@ public class ProductServiceImpl implements IProductService{
     }
 
     @Override
+    @Transactional
     public ResponseEntity<ProductResponseRest> deleteById(Long id) {
 
         ProductResponseRest response =new ProductResponseRest();
@@ -185,9 +186,55 @@ public class ProductServiceImpl implements IProductService{
     }
 
     @Override
-    public ResponseEntity<ProductResponseRest> update(Long id, Product product) {
-        return null;
+    @Transactional
+    public ResponseEntity<ProductResponseRest> update( Product product,Long categoryId,Long id) {
+
+
+        ProductResponseRest response=new ProductResponseRest();
+        List<Product> list=new ArrayList<>();
+        try {
+            //search category to set in the product object
+            Optional<Category> category=categoryRepository.findById(categoryId);
+            if(category.isPresent()){
+                product.setCategory(category.get());
+            }else{
+                response.setMetadata("Respuesta nook","-1","Categoria no encontrada asociada al producto");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.NOT_FOUND);
+            }
+            //search product to update
+            Optional<Product> productSearch=productRepository.findById(id);
+            if(productSearch.isPresent()){
+                //byte[] imageDescompressed = Util.decompressZlib(product.getPicture());
+
+                //se actualizara el producto
+                productSearch.get().setAccount(product.getAccount());
+                productSearch.get().setName(product.getName());
+                productSearch.get().setPrice(product.getPrice());
+                productSearch.get().setCategory(product.getCategory());
+                productSearch.get().setPicture(product.getPicture());
+
+                //save the product in BD
+                Product producUpdate=productRepository.save(productSearch.get());
+                if (producUpdate !=null){
+                    list.add(producUpdate);
+                    response.getProductResponse().setProduct(list);
+                    response.setMetadata("Respuesta ok","00","Producto Actualizado");
+                }else{
+                response.setMetadata("Respuesta nook","-1","Producto no Actualizado");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.BAD_REQUEST);
+                }
+
+            }else{
+                response.setMetadata("Respuesta nook","-1","Producto no Actualizado");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.BAD_REQUEST);
+            }
+
+        }catch (Exception e){
+            response.setMetadata("Respuesta nook","-1","Error al Actualizar producto");
+            e.getStackTrace();
+            return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
+
     }
-
-
 }
